@@ -10,3 +10,36 @@ body,
   overflow: hidden;
 }
 
+/* Slim, overlay-style scrollbar (macOS-like). Uses Chromium's native
+   ::-webkit-scrollbar primitives — no JS polyfill. Transparent track so it
+   overlays content; rounded semi-transparent thumb darkens on hover/active. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(63 63 70 / 0.5) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(63 63 70 / 0.5);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(82 82 91 / 0.8);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgb(82 82 91);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
