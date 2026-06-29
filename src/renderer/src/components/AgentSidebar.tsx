@@ -255,16 +255,14 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                   <span className="truncate text-sm text-zinc-100">{a.name}</span>
                 )}
               </div>
-              <div className="mt-0.5 flex items-center justify-between gap-2">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                  <span className="truncate text-[11px] text-zinc-500" title={a.branch}>{a.branch}</span>
-                  {diff?.hasChanges && (
-                    <span className="flex shrink-0 items-center gap-1 font-mono text-[11px]">
-                      <span className="text-emerald-400">+{diff.added}</span>
-                      <span className="text-red-400">−{diff.deleted}</span>
-                    </span>
-                  )}
+              {diff?.hasChanges && (
+                <div className="mt-0.5 flex items-center gap-1 font-mono text-[11px]">
+                  <span className="text-emerald-400">+{diff.added}</span>
+                  <span className="text-red-400">−{diff.deleted}</span>
                 </div>
+              )}
+              <div className="mt-0.5 flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-500" title={a.branch}>{a.branch}</span>
                 {editing ? (
                   <span className="shrink-0 text-[11px] text-zinc-500">enter to save</span>
                 ) : confirming ? (
@@ -290,7 +288,7 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                     </button>
                   </span>
                 ) : (
-                  <span className="hidden shrink-0 items-center gap-1.5 group-hover:flex">
+                  <span className="hidden shrink-0 flex-col items-end gap-1 group-hover:flex">
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
