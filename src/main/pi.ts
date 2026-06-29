@@ -26,7 +26,7 @@ export function buildPiLaunchConfig(
   if (config?.model) args.push('--model', config.model)
   if (config?.thinking) args.push('--thinking', config.thinking)
   if (config?.extraArgs) args.push(...splitArgs(config.extraArgs))
-  if (config?.firstMessage) args.push(config.firstMessage)
+  if (config?.firstMessage && !resume) args.push(config.firstMessage)
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     SUPERPI: '1',

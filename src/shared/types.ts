@@ -55,7 +55,8 @@ export interface AgentConfig {
   baseBranch?: string
   /** Extra pi args, space-separated and shell-safe on our side. */
   extraArgs?: string
-  /** First prompt sent to the agent on launch (positional arg to omp). */
+  /** First prompt sent when the agent starts a fresh session (positional arg
+   * to omp). Sent only on initial launch — never when reviving or resuming. */
   firstMessage?: string
   /** Exactly one config is the default used by +New. */
   isDefault?: boolean
