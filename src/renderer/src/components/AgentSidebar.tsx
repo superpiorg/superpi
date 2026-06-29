@@ -225,9 +225,9 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
             <div
               key={a.id}
               onClick={() => { if (!editing) onSelect(a.id) }}
-              className={`group cursor-pointer border-l-2 px-4 py-2 ${
+              className={`group relative cursor-pointer border-l-2 px-4 py-2 ${
                 active ? 'border-emerald-400 bg-zinc-800' : 'border-transparent hover:bg-zinc-800/60'
-              }`}
+              } ${editing || confirming ? '' : 'group-hover:pr-16'}`}
             >
               <div className="flex items-center gap-2">
                 {a.kind === 'terminal' ? (
@@ -263,9 +263,8 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
               )}
               <div className="mt-0.5 flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-500" title={a.branch}>{a.branch}</span>
-                {editing ? (
-                  <span className="shrink-0 text-[11px] text-zinc-500">enter to save</span>
-                ) : confirming ? (
+                {editing && <span className="shrink-0 text-[11px] text-zinc-500">enter to save</span>}
+                {confirming && (
                   <span className="flex shrink-0 items-center gap-1">
                     <button
                       onClick={(e) => {
@@ -287,38 +286,39 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                       cancel
                     </button>
                   </span>
-                ) : (
-                  <span className="hidden shrink-0 flex-col items-end gap-1 group-hover:flex">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        spawnTerminalOnAgent(a)
-                      }}
-                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
-                    >
-                      terminal
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        startRename(a.id, a.name)
-                      }}
-                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
-                    >
-                      rename
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setConfirmId(a.id)
-                      }}
-                      className="text-[11px] text-zinc-500 hover:text-red-400"
-                    >
-                      remove
-                    </button>
-                  </span>
                 )}
               </div>
+              {!editing && !confirming && (
+                <div className="absolute right-2 top-2 hidden flex-col items-end gap-1 group-hover:flex">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      spawnTerminalOnAgent(a)
+                    }}
+                    className="text-[11px] text-zinc-500 hover:text-zinc-300"
+                  >
+                    terminal
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      startRename(a.id, a.name)
+                    }}
+                    className="text-[11px] text-zinc-500 hover:text-zinc-300"
+                  >
+                    rename
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setConfirmId(a.id)
+                    }}
+                    className="text-[11px] text-zinc-500 hover:text-red-400"
+                  >
+                    remove
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}
