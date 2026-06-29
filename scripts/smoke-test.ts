@@ -60,6 +60,11 @@ async function testWorktree(): Promise<void> {
   check('worktree checked out file present', existsSync(join(worktreePath, 'README.md')))
   const branches = git(['branch', '--format=%(refname:short)'], repo)
   check('branch created', branches.includes(branch), `want ${branch}`)
+  check(
+    'worktree branch reads back via rev-parse (not main)',
+    git(['rev-parse', '--abbrev-ref', 'HEAD'], worktreePath) === branch,
+    `want ${branch}`
+  )
   check('worktree lives under repo .superpi', worktreePath.includes('.superpi'))
   check('local exclude file exists', existsSync(join(repo, '.git', 'info', 'exclude')))
 

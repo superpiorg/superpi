@@ -1,4 +1,5 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
+import simpleGit from 'simple-git'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import type { AgentConfig, AgentDescriptor, AgentKind, GitLogEntry, TerminalAttachResult, WorktreeActionResult, WorktreeGitState, WorkspaceInfo } from '@shared/types'
@@ -86,7 +87,12 @@ export function registerIpc(_win: BrowserWindow, c: Ctx): void {
       let branch: string
       if (opts.cwdPath) {
         worktreePath = opts.cwdPath
-        branch = 'main'
+        try {
+          const ref = (await simpleGit(opts.cwdPath).revparse(['--abbrev-ref', 'HEAD'])).trim()
+          branch = ref && ref !== 'HEAD' ? ref : 'main'
+        } catch {
+          branch = 'main'
+        }
       } else {
         const info = await c.worktrees.create(ws.path, id, config?.baseBranch)
         worktreePath = info.worktreePath
