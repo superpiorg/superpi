@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import type { AgentDescriptor, AgentStatusInfo, GitLogEntry, WorkspaceInfo } from '@shared/types'
+import type { AgentDescriptor, AgentStatusInfo, GitLogEntry, WorktreeGitState, WorkspaceInfo } from '@shared/types'
 import { ConfigsDialog } from './ConfigsDialog'
 
 interface Props {
@@ -18,6 +18,9 @@ const STATUS_DOT: Record<string, string> = {
   error: 'bg-red-500'
 }
 
+/** Poll interval for per-agent git diff (LoC) shown under each agent name. */
+const GIT_POLL_MS = 3000
+
 export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }: Props) {
   const [creating, setCreating] = useState(false)
   const [configsOpen, setConfigsOpen] = useState(false)
@@ -27,11 +30,31 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
   const [showGitLog, setShowGitLog] = useState(false)
   const [gitLog, setGitLog] = useState<GitLogEntry[]>([])
   const [gitLogLoading, setGitLogLoading] = useState(false)
+  const [gitStates, setGitStates] = useState<Record<string, WorktreeGitState>>({})
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (editingId) inputRef.current?.select()
   }, [editingId])
+
+  // Poll the unstaged diff (LoC) for every agent so the sidebar stays current.
+  useEffect(() => {
+    let cancelled = false
+    const poll = async (): Promise<void> => {
+      const results = await Promise.all(
+        agents.map(async (a) => [a.id, await window.superpi.worktreeGitState(a.id)] as const)
+      )
+      if (cancelled) return
+      setGitStates((prev) => {
+        const next: Record<string, WorktreeGitState> = { ...prev }
+        for (const [id, st] of results) if (st) next[id] = st
+        return next
+      })
+    }
+    void poll()
+    const t = setInterval(poll, GIT_POLL_MS)
+    return () => { cancelled = true; clearInterval(t) }
+  }, [agents])
 
   async function newAgent(): Promise<void> {
     setCreating(true)
@@ -197,6 +220,7 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
           const active = a.id === activeId
           const confirming = confirmId === a.id
           const editing = editingId === a.id
+          const diff = gitStates[a.id]?.diff
           return (
             <div
               key={a.id}
@@ -232,7 +256,15 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                 )}
               </div>
               <div className="mt-0.5 flex items-center justify-between gap-2">
-                <span className="truncate text-[11px] text-zinc-500">{a.branch}</span>
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className="truncate text-[11px] text-zinc-500" title={a.branch}>{a.branch}</span>
+                  {diff?.hasChanges && (
+                    <span className="flex shrink-0 items-center gap-1 font-mono text-[11px]">
+                      <span className="text-emerald-400">+{diff.added}</span>
+                      <span className="text-red-400">−{diff.deleted}</span>
+                    </span>
+                  )}
+                </div>
                 {editing ? (
                   <span className="shrink-0 text-[11px] text-zinc-500">enter to save</span>
                 ) : confirming ? (
@@ -258,13 +290,13 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                     </button>
                   </span>
                 ) : (
-                  <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="hidden shrink-0 items-center gap-1.5 group-hover:flex">
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         spawnTerminalOnAgent(a)
                       }}
-                      className="text-[11px] text-zinc-500 opacity-0 hover:text-zinc-300 group-hover:opacity-100"
+                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
                     >
                       terminal
                     </button>
@@ -273,7 +305,7 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                         e.stopPropagation()
                         startRename(a.id, a.name)
                       }}
-                      className="text-[11px] text-zinc-500 opacity-0 hover:text-zinc-300 group-hover:opacity-100"
+                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
                     >
                       rename
                     </button>
@@ -282,7 +314,7 @@ export function AgentSidebar({ workspace, agents, statuses, activeId, onSelect }
                         e.stopPropagation()
                         setConfirmId(a.id)
                       }}
-                      className="text-[11px] text-zinc-500 opacity-0 hover:text-red-400 group-hover:opacity-100"
+                      className="text-[11px] text-zinc-500 hover:text-red-400"
                     >
                       remove
                     </button>
